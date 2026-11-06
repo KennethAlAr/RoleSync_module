@@ -1,0 +1,17 @@
+{
+  "id": "tfg-sync",
+  "title": "tfg-sync",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "description": "Modulo de conexion para aplicacion movil RoleSync.",
+  "socket": true,
+  "flags": {
+    "canUpload": true
+  },
+  "scripts": [
+    "scripts/main.js"
+  ]
+}
