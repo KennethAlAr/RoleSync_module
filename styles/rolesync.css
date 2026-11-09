@@ -1,0 +1,44 @@
+
+:root {
+    --rolesync-primary: #90856b;
+    --rolesync-bg-dark: #111111;
+    --rolesync-bg-light: #ffffff;
+    --rolesync-border-subtle: #252830;
+    --rolesync-font-code: monospace;
+}
+
+.rolesync-qr-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 10px;
+}
+
+.rolesync-qr-container p {
+    margin-bottom: 10px;
+}
+
+.rolesync-qr-img {
+    border: 2px solid var(--rolesync-primary);
+    border-radius: 8px;
+    width: 200px;
+    height: 200px;
+    background: var(--rolesync-bg-light);
+    padding: 5px;
+    display: block;
+    margin: 0 auto 15px auto;
+}
+
+.rolesync-otp-display {
+    background: var(--rolesync-bg-dark);
+    color: var(--rolesync-primary);
+    font-family: var(--rolesync-font-code);
+    font-size: 24px;
+    font-weight: bold;
+    letter-spacing: 4px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--rolesync-border-subtle);
+}
