@@ -4,9 +4,11 @@ import { cryptoService } from "./api/cryptoService.js";
 import { setupQrDialog } from "./ui/qrDialog.js";
 import { registerEventRouter } from "./game/eventRouter.js";
 
-// ==========================================
-// 1. INICIALIZACIÓN DEL MÓDULO
-// ==========================================
+/**
+ * Hook 'init' de Foundry VTT.
+ * Se dispara durante la fase inicial de arranque del cliente, antes de que el mundo cargue.
+ * Registra la configuración persistente del módulo (World ID) en la base de datos.
+ */
 Hooks.once('init', function() {
     console.log("==========================================");
     console.log("RoleSync | Inicializando plugin backend...");
@@ -22,11 +24,16 @@ Hooks.once('init', function() {
     });
 });
 
-// ==========================================
-// 2. MUNDO LISTO (ARRANQUE DE CONEXIÓN Y EVENTOS)
-// ==========================================
+/**
+ * Hook 'ready' de Foundry VTT.
+ * Se dispara cuando todo el lienzo, actores y datos del mundo han terminado de cargar.
+ * Se encarga de gestionar el identificador único de la partida, activar los listeners 
+ * de eventos de D&D e intentar una reconexión silenciosa mediante el token guardado.
+ * 
+ * @async
+ */
 Hooks.once('ready', async function() {
-    // Escuchador para desconectar el socket limpiamente cuando el usuario pulsa F5 o cierra la pestaña
+    // Listener para desconectar el socket limpiamente cuando el usuario pulsa F5 o cierra la pestaña
     window.addEventListener('beforeunload', () => {
         socketManager.disconnect();
     });
@@ -69,9 +76,14 @@ Hooks.once('ready', async function() {
     }
 });
 
-// ==========================================
-// 3. INTERFAZ DE USUARIO (UI)
-// ==========================================
+/**
+ * Hook 'getHeaderControlsApplicationV2' de Foundry VTT.
+ * Intercepta la renderización de la cabecera de las ventanas de tipo ApplicationV2.
+ * Si la ventana pertenece a un Actor, delega la inyección del botón QR al gestor de UI.
+ * 
+ * @param {object} app - Instancia de la aplicación que se está renderizando.
+ * @param {Array<object>} controls - Matriz de controles/botones de la cabecera de la ventana.
+ */
 Hooks.on("getHeaderControlsApplicationV2", (app, controls) => {
     // Delegamos la inyección del botón y la lógica del código QR al módulo UI
     setupQrDialog(app, controls);

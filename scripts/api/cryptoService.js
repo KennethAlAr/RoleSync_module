@@ -1,8 +1,24 @@
+/**
+ * Convierte un ArrayBuffer a una cadena Base64Url (URL-safe).
+ * Reemplaza los caracteres no seguros en URLs ('+', '/') y elimina el relleno ('=').
+ * 
+ * @private
+ * @param {ArrayBuffer} buffer - Los datos binarios (como la firma criptográfica) a codificar.
+ * @returns {string} La cadena codificada en formato Base64Url.
+ */
 const base64UrlEncode = (buffer) => {
     const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
     return base64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 };
 
+/**
+ * Decodifica una cadena Base64Url devolviéndola a su formato binario original (representado en string).
+ * Restaura los caracteres estándar de Base64 y añade el relleno ('=') necesario para la decodificación.
+ * 
+ * @private
+ * @param {string} str - La cadena en formato Base64Url.
+ * @returns {string} Los datos decodificados mediante atob().
+ */
 const base64UrlDecode = (str) => {
     let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
     while (base64.length % 4) base64 += '=';
@@ -11,7 +27,14 @@ const base64UrlDecode = (str) => {
 
 export const cryptoService = {
     /**
-     * Genera un JWT firmado con el worldId usando HMAC SHA-256
+     * Genera un JSON Web Token (JWT) firmado digitalmente.
+     * El token incluye en su carga útil (payload) el ID del mundo, el ID del personaje y 
+     * la marca de tiempo de creación (iat). La firma garantiza que el token no ha sido alterado.
+     * 
+     * @async
+     * @param {string} worldId - El identificador único de la partida (usado también como secreto de firma).
+     * @param {string} characterId - El identificador del Actor (personaje) de Foundry VTT.
+     * @returns {Promise<string>} El token JWT completo en formato (header.payload.signature).
      */
     async createToken(worldId, characterId) {
         const header = { alg: "HS256", typ: "JWT" };
@@ -39,7 +62,13 @@ export const cryptoService = {
     },
 
     /**
-     * Valida un JWT comprobando su firma con el worldId y extrayendo sus datos
+     * Valida un JWT comprobando su estructura, su firma criptográfica y que pertenezca a la partida actual.
+     * 
+     * @async
+     * @param {string} token - El JWT completo a verificar.
+     * @param {string} expectedWorldId - El ID de la partida actual, utilizado para verificar la firma.
+     * @returns {Promise<{isValid: boolean, error?: string, worldId?: string, characterId?: string}>} 
+     * Un objeto que indica si es válido y, en caso afirmativo, los datos extraídos; si falla, incluye el motivo del error.
      */
     async validateToken(token, expectedWorldId) {
         try {
