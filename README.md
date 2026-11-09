@@ -5,7 +5,7 @@
 ![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white)
 ![Handlebars.js](https://img.shields.io/badge/Handlebars.js-f0772b?style=for-the-badge&logo=handlebarsdotjs&logoColor=black)
 ![Socket.io](https://img.shields.io/badge/Socket.io-black?style=for-the-badge&logo=socket.io&badgeColor=010101)
-![Foundry VTT](https://img.shields.io/badge/Foundry_VTT-v11%2B-ff6400?style=for-the-badge)
+![Foundry VTT](https://img.shields.io/badge/Foundry_VTT-v13-ff6400?style=for-the-badge)
 
 Módulo oficial para Foundry VTT del ecosistema **RoleSync**. Se integra directamente en la interfaz del Dungeon Master y los jugadores, interceptando eventos de la partida en tiempo real y gestionando la vinculación segura mediante códigos QR para la app móvil.
 
