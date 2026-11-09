@@ -6,14 +6,17 @@ import {
 } from "./characterSync.js";
 
 /**
- * Registra todos los oyentes de eventos de Foundry VTT para reaccionar a 
- * cambios en la hoja del personaje, inventario, efectos y estado de combate.
+ * Registra todos los Hooks nativos de Foundry VTT.
+ * Actúa como un enrutador que intercepta los cambios locales en el mundo 
+ * (modificación de hojas de personaje, equipamiento, estados y turnos de combate)
+ * y delega la emisión de estos cambios hacia la aplicación móvil en tiempo real.
  */
 export function registerEventRouter() {
-
-    // ==========================================
-    // 1. ACTUALIZACIONES DIRECTAS DEL ACTOR (Stats y HP)
-    // ==========================================
+    
+    /**
+     * Hook 'updateActor'.
+     * Se dispara cuando cambian los atributos principales de un personaje (vida, iniciativa, armadura, etc.).
+     */
     Hooks.on("updateActor", (actor, changes) => {
         const socket = socketManager.getSocket();
         const activeCharacterId = socketManager.getActiveCharacterId();
@@ -37,14 +40,18 @@ export function registerEventRouter() {
             emitPlayerUpdate(actor, activeCharacterId, socket);
         }
     });
-
-    // ==========================================
-    // 2. ACTUALIZACIONES INDIRECTAS (Objetos y Efectos)
-    // ==========================================
+    
+    /**
+     * Función controladora unificada para cambios en el inventario o efectos activos.
+     * Extrae el Actor propietario del objeto/efecto y evalúa si necesita actualizar sus estadísticas en la app.
+     * 
+     * @param {Document} doc - El documento modificado (Item o ActiveEffect) dentro de Foundry VTT.
+     */
     const handleItemOrEffect = (doc) => { 
         const socket = socketManager.getSocket();
         const activeCharacterId = socketManager.getActiveCharacterId();
         
+        // Dependiendo de la versión de Foundry o tipo de documento, el padre puede estar en doc.parent o doc.actor
         const targetActor = doc.parent || doc.actor;
         if (targetActor && targetActor.id === activeCharacterId) {
             emitPlayerUpdate(targetActor, activeCharacterId, socket); 
@@ -57,12 +64,13 @@ export function registerEventRouter() {
     Hooks.on("createActiveEffect", handleItemOrEffect); 
     Hooks.on("deleteActiveEffect", handleItemOrEffect); 
     Hooks.on("updateActiveEffect", handleItemOrEffect);
-
-    // ==========================================
-    // 3. ACTUALIZACIONES DE COMBATE (Iniciativa)
-    // ==========================================
     
-    // Función adaptadora para inyectar las dependencias sin repetir código
+    /**
+     * Función adaptadora que extrae las dependencias de socket y personaje activo,
+     * y delega la verificación del estado de combate (si el personaje debe tirar iniciativa).
+     * 
+     * @param {Actor} actor - El documento del Actor implicado en el combate.
+     */
     const handleCombatState = (actor) => {
         const socket = socketManager.getSocket();
         const activeCharacterId = socketManager.getActiveCharacterId();

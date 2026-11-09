@@ -1,7 +1,8 @@
 /**
  * Convierte la URL de una imagen (o la primera imagen de un directorio) a formato Base64.
+ * 
  * @param {string} url - La ruta de la imagen o directorio en Foundry.
- * @returns {Promise<string|null>} - La cadena en Base64 o null en caso de error.
+ * @returns {Promise<string|null>} La cadena en Base64 o null en caso de error.
  */
 export async function getBase64Image(url) {
     try {
@@ -22,7 +23,7 @@ export async function getBase64Image(url) {
             reader.readAsDataURL(blob);
         });
     } catch (error) {
-        console.warn("[RoleSync] Error al convertir la imagen a Base64:", error);
+        console.warn("RoleSync | Error al convertir la imagen a Base64:", error);
         return null;
     }
 }

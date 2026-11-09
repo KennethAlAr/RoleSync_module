@@ -1,4 +1,12 @@
-<!-- templates/qr-dialog.hbs -->
+{{!-- 
+  Plantilla del diálogo de vinculación de dispositivos para RoleSync.
+  Renderiza el código QR y el PIN numérico de un solo uso.
+  
+  Contexto esperado (Variables inyectadas desde renderTemplate):
+  @param {string} actorName - Nombre del personaje (Actor) seleccionado en Foundry.
+  @param {string} qrUrl - URL completa de la API generadora de la imagen del código QR.
+  @param {string} otp - PIN numérico de 6 dígitos generado por el servidor Render.
+--}}
 <div class="rolesync-qr-container">
     <p>Escanea este código o introduce el PIN desde la app para vincular a <strong>{{actorName}}</strong>:</p>
     

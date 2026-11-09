@@ -1,9 +1,15 @@
 import { getBase64Image } from "../utils/imageHelper.js";
 
-// ==========================================
-// RECEPCIÓN: ORDENES DESDE LA APP MÓVIL
-// ==========================================
-
+/**
+ * Procesa una solicitud de tirada de salvación enviada desde la aplicación móvil.
+ * Busca al personaje en Foundry y lanza el diálogo o la tirada correspondiente.
+ * 
+ * @async
+ * @param {Object} data - Carga útil (payload) enviada por el socket.
+ * @param {string} data.characterId - ID del personaje objetivo de la tirada.
+ * @param {string} data.ability - Abreviatura de la característica (ej. 'str', 'dex', 'con').
+ * @param {string} activeCharacterId - ID del personaje actualmente vinculado a la sesión.
+ */
 export async function handleSavingThrow(data, activeCharacterId) {
     const { characterId: targetId, ability } = data;
     if (targetId !== activeCharacterId) return;
@@ -11,6 +17,15 @@ export async function handleSavingThrow(data, activeCharacterId) {
     if (actor) await actor.rollSavingThrow({ ability });
 }
 
+/**
+ * Procesa una solicitud de tirada de iniciativa enviada desde la aplicación móvil.
+ * Si el personaje está en un combate activo, abre el diálogo de iniciativa y lo añade al encuentro.
+ * 
+ * @async
+ * @param {Object} data - Carga útil (payload) enviada por el socket.
+ * @param {string} data.characterId - ID del personaje objetivo.
+ * @param {string} activeCharacterId - ID del personaje actualmente vinculado a la sesión.
+ */
 export async function handleInitiative(data, activeCharacterId) {
     const { characterId: targetId } = data;
     if (targetId !== activeCharacterId) return;
@@ -18,6 +33,15 @@ export async function handleInitiative(data, activeCharacterId) {
     if (actor) await actor.rollInitiativeDialog({ createCombatants: true });
 }
 
+/**
+ * Actualiza los puntos de golpe (HP) actuales del personaje en Foundry 
+ * según la modificación realizada desde la aplicación móvil.
+ * 
+ * @param {Object} data - Carga útil (payload) enviada por el socket.
+ * @param {string} data.characterId - ID del personaje a modificar.
+ * @param {number} data.hp - Nuevo valor de puntos de golpe actuales.
+ * @param {string} activeCharacterId - ID del personaje actualmente vinculado a la sesión.
+ */
 export function handleUpdateHp(data, activeCharacterId) {
     const { characterId: targetId, hp } = data;
     if (targetId !== activeCharacterId) return;
@@ -25,6 +49,15 @@ export function handleUpdateHp(data, activeCharacterId) {
     if (actor) actor.update({ "system.attributes.hp.value": hp });
 }
 
+/**
+ * Actualiza los puntos de golpe temporales (Temp HP) del personaje en Foundry 
+ * según la modificación realizada desde la aplicación móvil.
+ * 
+ * @param {Object} data - Carga útil (payload) enviada por el socket.
+ * @param {string} data.characterId - ID del personaje a modificar.
+ * @param {number} data.tempHp - Nuevo valor de puntos de golpe temporales.
+ * @param {string} activeCharacterId - ID del personaje actualmente vinculado a la sesión.
+ */
 export function handleUpdateTempHp(data, activeCharacterId) {
     const { characterId: targetId, tempHp } = data;
     if (targetId !== activeCharacterId) return;
@@ -32,10 +65,16 @@ export function handleUpdateTempHp(data, activeCharacterId) {
     if (actor) actor.update({ "system.attributes.hp.temp": tempHp });
 }
 
-// ==========================================
-// EXTRACCIÓN: DATOS COMPLETOS (CONEXIÓN)
-// ==========================================
-
+/**
+ * Recopila todos los datos relevantes del personaje (Stats, HP, Avatar, Tiradas, Combate) 
+ * cuando la aplicación móvil se conecta por primera vez, y los emite de vuelta a través del socket.
+ * 
+ * @async
+ * @param {Object} data - Carga útil de la petición.
+ * @param {string} data.characterId - ID bruto del personaje solicitado (puede venir prefijado por 'Actor.').
+ * @param {string} activeCharacterId - ID del personaje validado por el token.
+ * @param {Socket} socket - Instancia de Socket.io para emitir los datos de vuelta.
+ */
 export async function handleRequestCharacterData(data, activeCharacterId, socket) {
     const { characterId: targetId } = data;
     const cleanId = targetId.replace("Actor.", "");
@@ -88,10 +127,14 @@ export async function handleRequestCharacterData(data, activeCharacterId, socket
     socket.emit("SAVING_THROWS_INFO", { characterId: cleanId, savingThrows });
 }
 
-// ==========================================
-// EMISIÓN: ACTUALIZACIONES EN TIEMPO REAL
-// ==========================================
-
+/**
+ * Extrae los atributos base del Actor (Nivel, AC, Iniciativa, Velocidad, Competencia)
+ * y los emite a la aplicación móvil mediante el evento 'PLAYER_UPDATE'.
+ * 
+ * @param {Actor} actor - Documento del Actor de Foundry VTT que ha sufrido cambios.
+ * @param {string} activeCharacterId - ID del personaje vinculado actualmente.
+ * @param {Socket} socket - Instancia de Socket.io conectada.
+ */
 export function emitPlayerUpdate(actor, activeCharacterId, socket) {
     if (!actor || actor.id !== activeCharacterId || !socket || !socket.connected) return;
     const sys = actor.system;
@@ -107,6 +150,14 @@ export function emitPlayerUpdate(actor, activeCharacterId, socket) {
     });
 }
 
+/**
+ * Extrae el estado actual de salud del Actor (HP actuales, máximos y temporales)
+ * y lo emite a la aplicación móvil mediante el evento 'HEALTH_UPDATE'.
+ * 
+ * @param {Actor} actor - Documento del Actor de Foundry VTT que ha sufrido cambios.
+ * @param {string} activeCharacterId - ID del personaje vinculado actualmente.
+ * @param {Socket} socket - Instancia de Socket.io conectada.
+ */
 export function emitHealthUpdate(actor, activeCharacterId, socket) {
     if (!actor || actor.id !== activeCharacterId || !socket || !socket.connected) return;
     
@@ -118,6 +169,14 @@ export function emitHealthUpdate(actor, activeCharacterId, socket) {
     });
 }
 
+/**
+ * Verifica si el Actor se encuentra en un combate activo y si aún necesita tirar iniciativa.
+ * Emite el resultado a la aplicación móvil mediante el evento 'COMBAT_STATE_UPDATE'.
+ * 
+ * @param {Actor} actor - Documento del Actor de Foundry VTT evaluado.
+ * @param {string} activeCharacterId - ID del personaje vinculado actualmente.
+ * @param {Socket} socket - Instancia de Socket.io conectada.
+ */
 export function checkAndSendCombatState(actor, activeCharacterId, socket) {
     if (!actor || actor.id !== activeCharacterId || !socket || !socket.connected) return;
     let canRoll = false;

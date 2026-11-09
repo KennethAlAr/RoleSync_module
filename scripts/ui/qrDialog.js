@@ -3,12 +3,18 @@ import { cryptoService } from "../api/cryptoService.js";
 import { socketManager } from "../api/socketManager.js";
 
 /**
- * Inyecta el botón de RoleSync en la cabecera de la ficha de personaje 
- * y gestiona el flujo de apertura del diálogo del código QR.
+ * Inyecta el botón de "Role-Sync QR" en la cabecera de las fichas de personaje (Actor) de Foundry VTT.
+ * Gestiona el flujo completo de vinculación: validación/creación del token JWT, 
+ * conexión del WebSocket y solicitud del OTP al servidor para mostrar el código QR.
+ * 
+ * @param {ApplicationV2} app - Instancia de la ventana de la interfaz de Foundry que se está renderizando.
+ * @param {Array<Object>} controls - Matriz de botones/controles de la barra superior de la ventana.
  */
 export function setupQrDialog(app, controls) {
+    // Verificamos que la ventana pertenezca a un documento de tipo "Actor" (Personaje)
     if (!app.document || app.document.documentName !== "Actor") return;
 
+    // Inyectamos nuestro botón al principio de la lista de controles
     controls.unshift({
         icon: "fa-solid fa-qrcode",
         label: "Role-Sync QR",
@@ -16,7 +22,16 @@ export function setupQrDialog(app, controls) {
         action: "generateQr"
     });
 
+    // Registramos la acción que se ejecutará al pulsar el botón
     if (!app.options.actions["generateQr"]) {
+        
+        /**
+         * Función asíncrona que maneja el evento de clic en el botón del QR.
+         * 
+         * @async
+         * @param {Event} event - El evento de clic del ratón.
+         * @param {HTMLElement} target - El elemento HTML del botón pulsado.
+         */
         app.options.actions["generateQr"] = async function(event, target) {
             const actor = app.document;
             if (!actor) return;
@@ -38,15 +53,14 @@ export function setupQrDialog(app, controls) {
                 }
             }
 
-            // 2. Si no hay token válido para este personaje, creamos uno nuevo
+            // 2. Si no hay token válido para este personaje, creamos uno nuevo y lo guardamos
             if (!token) {
                 token = await cryptoService.createToken(worldId, characterId);
                 localStorage.setItem(CONFIG.TOKEN_KEY, token);
                 console.log(`RoleSync | Creado nuevo token para el personaje: ${characterId}`);
             }
 
-            // 👇 NUEVA COMPROBACIÓN INTELIGENTE 👇
-            // Si el socket ya está conectado y es el mismo personaje, nos saltamos la reconexión innecesaria
+            // Evitamos desconectar y reconectar si el GM ya está usando este mismo personaje
             const socket = socketManager.getSocket();
             const activeCharacterId = socketManager.getActiveCharacterId();
             
@@ -63,14 +77,14 @@ export function setupQrDialog(app, controls) {
                 console.log("RoleSync | Socket ya activo para este personaje, reutilizando conexión...");
             }
 
-            // 4. Solicitamos el OTP a Render
+            // 4. Solicitamos el OTP (One Time Password) al servidor backend
             const currentSocket = socketManager.getSocket();
             currentSocket.emit('GENERATE_OTP', {
                 worldId,
                 characterId,
                 playerId: game.user.id,
                 token
-            }, async (res) => { // <-- ¡IMPORTANTE! Añadimos 'async' aquí al callback
+            }, async (res) => { 
                 if (!res || !res.success) {
                     ui.notifications.error(`RoleSync | Error al solicitar OTP: ${res?.error || 'Sin respuesta'}`);
                     return;
@@ -79,8 +93,7 @@ export function setupQrDialog(app, controls) {
                 const otp = res.otp;
                 const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(otp)}`;
 
-                // 👇 MAGIA DE FOUNDRY AQUÍ 👇
-                // Compilamos la plantilla pasándole nuestras variables
+                // Compilamos la plantilla Handlebars inyectando las variables de UI
                 const templatePath = `modules/${CONFIG.MODULE_ID}/templates/qr-dialog.hbs`;
                 const contentHTML = await renderTemplate(templatePath, {
                     actorName: actor.name,
@@ -88,7 +101,7 @@ export function setupQrDialog(app, controls) {
                     otp: otp
                 });
 
-                // Renderizamos el diálogo (esto queda igual)
+                // Renderizamos el diálogo de forma compatible con ApplicationV2 y Dialog clásico
                 if (foundry.applications?.api?.DialogV2) {
                     foundry.applications.api.DialogV2.prompt({
                         window: { title: `Vincular Personaje: ${actor.name}` },
