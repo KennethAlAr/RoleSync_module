@@ -38,7 +38,7 @@ Dado que este módulo está en fase de desarrollo para un TFG y no está publica
 
    ```bash
    cd Ruta/A/Tu/FoundryVTT/Data/modules/
-   git clone https://github.com/tu-usuario/rolesync-foundry.git rolesync
+   git clone https://github.com/KennethAlAr/rolesync-foundry.git rolesync
    ```
    *(Nota: Es de vital importancia que la carpeta final se llame exactamente `rolesync` para coincidir con el identificador del `module.json`).*
 
