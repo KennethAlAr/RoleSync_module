@@ -26,7 +26,7 @@ Este repositorio es una de las tres piezas que componen el Trabajo de Fin de Gra
 Para instalar y ejecutar este módulo necesitas:
 
 * **Foundry Virtual Tabletop:** Versión 13 (Recomendado build 351).
-* **Sistema de Juego:** Dungeons & Dragons 5e (`dnd5e`).
+* **Sistema de Juego:** Dungeons & Dragons 5e (`dnd5e 5.3.1`).
 * **Conexión a Internet:** Para alcanzar el servidor Relay desplegado, o configuración en red local si el servidor corre en tu misma máquina.
 
 ## Instalación y Configuración
